@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Entry {
+  id        String   @id @default(cuid())
+  content   String
+  followups String   @default("[]") // JSON: [{question, answer}]
+  createdAt DateTime @default(now())
+}
+
+model Person {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  summary   String   @default("")
+  traits    String   @default("[]") // JSON array of trait strings
+  events    String   @default("[]") // JSON array of event strings
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserInsight {
+  id        String   @id @default(cuid())
+  category  String   // "value"|"belief"|"trait"|"life_lesson"|"goal"
+  content   String
+  createdAt DateTime @default(now())
+}

@@ -1,26 +1,65 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-mt-bg: #f5f3ee;
+  --color-mt-surface: #ffffff;
+  --color-mt-text: #1a1a1a;
+  --color-mt-text2: #6b6b6b;
+  --color-mt-text3: #999999;
+  --color-mt-accent: #8b6f47;
+  --color-mt-accent-light: #e8dfd0;
+  --color-mt-border: #e5e0d5;
+  --font-sans: -apple-system, "PingFang SC", "Helvetica Neue", "Noto Sans SC", sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --color-mt-bg: #121212;
+    --color-mt-surface: #1e1e1e;
+    --color-mt-text: #e8e6e3;
+    --color-mt-text2: #a09e9a;
+    --color-mt-text3: #6b6966;
+    --color-mt-accent: #c4a66a;
+    --color-mt-accent-light: #2a2520;
+    --color-mt-border: #2a2a2a;
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-mt-bg);
+  color: var(--color-mt-text);
+  font-family: var(--font-sans), "PingFang SC", "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-mt-text3);
+  border-radius: 2px;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes pulse-record {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.recording {
+  animation: pulse-record 1s infinite;
 }

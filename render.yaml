@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: mindtrace
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npx prisma db push && npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: APP_PASSWORD
+        sync: false
+      - key: AUTH_SECRET
+        sync: false
