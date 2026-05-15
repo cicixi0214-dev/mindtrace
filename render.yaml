@@ -3,7 +3,7 @@ services:
     name: mindtrace
     env: node
     plan: free
-    buildCommand: npm install && npx prisma generate && npm run build
+    buildCommand: npm install --include=dev && npx prisma generate && npm run build
     startCommand: npx prisma db push && npm run start
     envVars:
       - key: NODE_ENV
