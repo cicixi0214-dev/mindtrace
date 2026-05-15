@@ -2,6 +2,7 @@ services:
   - type: web
     name: mindtrace
     env: node
+    plan: free
     buildCommand: npm install && npm run build
     startCommand: npx prisma db push && npm run start
     envVars:
