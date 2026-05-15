@@ -1,6 +1,7 @@
-import { getFollowupQuestion } from "@/lib/deepseek";
+import { getFollowupQuestion, getFallbackQuestion } from "@/lib/deepseek";
 import type { Personality } from "@/lib/deepseek";
 import { prisma } from "@/lib/prisma";
+import { remaining, record } from "@/lib/tokens";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -8,6 +9,14 @@ export async function POST(req: NextRequest) {
 
   if (!content?.trim()) {
     return Response.json({ error: "内容不能为空" }, { status: 400 });
+  }
+
+  // Check token budget before calling DeepSeek
+  const budget = remaining();
+  if (!budget.allowed) {
+    console.warn("Token budget exceeded, using local fallback for ask");
+    const fb = getFallbackQuestion(content, existingFollowups ?? [], personality as Personality);
+    return Response.json({ question: { data: fb, usage: null } });
   }
 
   try {
@@ -27,14 +36,20 @@ export async function POST(req: NextRequest) {
         .join("\n");
     }
 
-    const question = await getFollowupQuestion(
+    const result = await getFollowupQuestion(
       content,
       existingFollowups ?? [],
       maxRounds ?? 3,
       (personality ?? "friend") as Personality,
       peopleContext
     );
-    return Response.json({ question });
+
+    // Record token usage
+    if (result.usage) {
+      record(result.usage.prompt, result.usage.completion);
+    }
+
+    return Response.json({ question: result });
   } catch {
     return Response.json({ error: "获取追问失败" }, { status: 500 });
   }

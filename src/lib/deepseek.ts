@@ -73,8 +73,8 @@ export async function getFollowupQuestion(
   maxRounds = 5,
   personality: Personality = "friend",
   peopleContext?: string
-): Promise<string | null> {
-  if (existingFollowups.length >= maxRounds) return null;
+): Promise<AiResult<string | null>> {
+  if (existingFollowups.length >= maxRounds) return { data: null, usage: null };
 
   let conversation = `用户原始记录：${content}\n`;
   if (existingFollowups.length > 0) {
@@ -113,18 +113,21 @@ export async function getFollowupQuestion(
 
   if (!res.ok) {
     console.error("DeepSeek API error:", await res.text());
-    return getFallbackQuestion(content, existingFollowups, personality);
+    return { data: getFallbackQuestion(content, existingFollowups, personality), usage: null };
   }
 
   const data = await res.json();
+  const usage = data.usage
+    ? { prompt: data.usage.prompt_tokens, completion: data.usage.completion_tokens, total: data.usage.total_tokens }
+    : null;
   const result = data.choices?.[0]?.message?.content?.trim();
 
-  if (!result || result.toLowerCase() === "null") return null;
+  if (!result || result.toLowerCase() === "null") return { data: null, usage };
 
-  return result;
+  return { data: result, usage };
 }
 
-function getFallbackQuestion(
+export function getFallbackQuestion(
   content: string,
   existingFollowups: FollowupRound[] = [],
   personality: Personality = "friend"
@@ -239,6 +242,11 @@ function getFallbackQuestion(
   return null;
 }
 
+// ── Token usage tracking ──
+
+export type Usage = { prompt: number; completion: number; total: number };
+export type AiResult<T> = { data: T; usage: Usage | null };
+
 // ── Person & Insight Extraction ──
 
 export type ExtractionResult = {
@@ -249,7 +257,7 @@ export type ExtractionResult = {
 export async function extractPeopleAndInsights(
   content: string,
   followups: FollowupRound[] = []
-): Promise<ExtractionResult> {
+): Promise<AiResult<ExtractionResult>> {
   let conversation = `用户记录：${content}\n`;
   if (followups.length > 0) {
     conversation += "\n追问与回答：\n";
@@ -308,12 +316,18 @@ export async function extractPeopleAndInsights(
 
     if (res.ok) {
       const data = await res.json();
+      const usage = data.usage
+        ? { prompt: data.usage.prompt_tokens, completion: data.usage.completion_tokens, total: data.usage.total_tokens }
+        : null;
       const text = data.choices?.[0]?.message?.content?.trim();
       if (text) {
         const parsed = JSON.parse(text);
         return {
-          people: Array.isArray(parsed.people) ? parsed.people : [],
-          userInsights: Array.isArray(parsed.userInsights) ? parsed.userInsights : [],
+          data: {
+            people: Array.isArray(parsed.people) ? parsed.people : [],
+            userInsights: Array.isArray(parsed.userInsights) ? parsed.userInsights : [],
+          },
+          usage,
         };
       }
     }
@@ -322,7 +336,7 @@ export async function extractPeopleAndInsights(
   }
 
   // Fallback: local extraction when DeepSeek is unavailable
-  return localExtract(content, followups);
+  return { data: localExtract(content, followups), usage: null };
 }
 
 function localExtract(

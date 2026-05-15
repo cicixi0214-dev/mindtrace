@@ -64,6 +64,7 @@ export default function Home() {
   const [morningWeather, setMorningWeather] = useState<{ icon: string; temp: string; condition: string; city: string } | null>(null);
   const [morningQuote, setMorningQuote] = useState("");
   const [morningLoading, setMorningLoading] = useState(false);
+  const [usageStats, setUsageStats] = useState<{ dailyPercent: number; monthPercent: number } | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const recognitionRef = useRef<any>(null);
 
@@ -76,6 +77,8 @@ export default function Home() {
     if (saved && ["friend", "wise", "family"].includes(saved)) {
       setPersonality(saved);
     }
+
+    fetchUsageStats();
 
     // Check if first visit of the day → show morning briefing
     const today = new Date().toISOString().slice(0, 10);
@@ -128,6 +131,13 @@ export default function Home() {
     } catch {}
   }, []);
 
+  const fetchUsageStats = useCallback(async () => {
+    try {
+      const res = await fetch("/api/usage");
+      if (res.ok) setUsageStats(await res.json());
+    } catch {}
+  }, []);
+
   const triggerExtraction = useCallback(
     async (content: string, followups: FollowupRound[]) => {
       try {
@@ -159,10 +169,12 @@ export default function Home() {
         });
         if (res.ok) {
           const { question } = await res.json();
-          if (question) {
+          const qText = question?.data ?? question;
+          if (qText) {
             setFollowupRound(existingFollowups.length + 1);
-            setFollowup({ q: question, entryId });
+            setFollowup({ q: qText, entryId });
             setAsking(false);
+            fetchUsageStats();
             return;
           }
         }
@@ -352,7 +364,18 @@ export default function Home() {
               记录思想的轨迹
             </p>
           </div>
-          <div className="flex-1 flex justify-end gap-1">
+          <div className="flex-1 flex justify-end items-center gap-1">
+            {usageStats && (
+              <div
+                className="text-[10px] px-1.5 py-0.5 rounded mr-0.5"
+                style={{
+                  color: usageStats.dailyPercent > 80 ? "#ff6b6b" : "var(--color-mt-text3)",
+                }}
+                title={`每日用量 ${usageStats.dailyPercent}%`}
+              >
+                {usageStats.dailyPercent}%
+              </div>
+            )}
             <button
               onClick={() => {
                 setPeopleTab("people");
@@ -442,6 +465,14 @@ export default function Home() {
                 </button>
               ))}
             </div>
+            {usageStats && (
+              <div
+                className="mt-4 pt-3 border-t text-[11px] space-y-0.5"
+                style={{ borderColor: "var(--color-mt-border)", color: "var(--color-mt-text3)" }}
+              >
+                <p>今日用量：{usageStats.dailyPercent}% · 月用量：{usageStats.monthPercent}%</p>
+              </div>
+            )}
           </div>
         </div>
       )}
