@@ -45,3 +45,9 @@ next-env.d.ts
 # database
 *.db
 *.db-journal
+
+# native app builds
+/ios/App/Pods
+/ios/App/build
+ios/App/App/public
+*.xcuserdata
