@@ -15,3 +15,7 @@ services:
         sync: false
       - key: AUTH_SECRET
         sync: false
+      - key: DAILY_TOKEN_LIMIT
+        value: 50000
+      - key: MONTHLY_TOKEN_LIMIT
+        value: 1000000
